@@ -201,6 +201,7 @@
 
     <string name="externalDocumentExamplePermissionExplanation">The file you selected is on the local device. Granting direct file access will allow PSPDFKit to use optimized file system reading, which yields much higher throughput.</string>
     <string name="grantAccess">Grant access</string>
+    <string name="grantAccess2">Grant access22</string>
     <string name="continueWithout">Continue without</string>
 
     <!-- Strings used by samples -->

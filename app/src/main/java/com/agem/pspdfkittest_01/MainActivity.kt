@@ -3,9 +3,7 @@ package com.agem.pspdfkittest_01
 import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import com.agem.pspdfkittest_01.databinding.ActivityMainBinding
@@ -13,7 +11,6 @@ import com.agem.pspdfkittest_01.firstkit.dataStore
 import com.agem.pspdfkittest_01.testActivity.ATestActivity
 import com.pspdfkit.configuration.activity.PdfActivityConfiguration
 import com.pspdfkit.ui.PdfActivityIntentBuilder
-import kotlinx.serialization.json.Json.Default.configuration
 
 class MainActivity : BaseBindingActivity<ActivityMainBinding>(
     R.layout.activity_main) {
@@ -84,6 +81,7 @@ class MainActivity : BaseBindingActivity<ActivityMainBinding>(
     private val requestPDF = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         it.data?.data?.let { uri ->
             val config = PdfActivityConfiguration.Builder(this)
+                .layout(com.pspdfkit.R.layout.pspdf__pdf_activity)
                 .build()
             val intent = PdfActivityIntentBuilder.fromUri(this, uri)
                 .configuration(config)
