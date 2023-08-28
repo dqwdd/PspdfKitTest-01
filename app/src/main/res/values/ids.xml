@@ -27,6 +27,8 @@
     <item name="custom_action_show" type="id"/>
     <item name="custom_action_hide" type="id"/>
 
+    <item name="custom_my_id_1" type="id"/>
+
     <!-- Custom annotation creation toolbar menu items. -->
     <item name="line_group" type="id"/>
     <item name="line_red" type="id"/>

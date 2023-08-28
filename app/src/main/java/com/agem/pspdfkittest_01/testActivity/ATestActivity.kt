@@ -3,8 +3,7 @@ package com.agem.pspdfkittest_01.testActivity
 import android.annotation.SuppressLint
 import android.view.Menu
 import android.view.MenuItem
-import androidx.core.content.ContextCompat
-import androidx.core.graphics.drawable.DrawableCompat
+import android.widget.Toast
 import com.agem.pspdfkittest_01.R
 import com.pspdfkit.document.PdfDocument
 import com.pspdfkit.ui.PdfActivity
@@ -33,7 +32,7 @@ class ATestActivity : PdfActivity() {
         val indexOfOutlineButton = menuItems.indexOf(PdfActivity.MENU_OPTION_OUTLINE)
 
         val customItems = ArrayList<Int>()
-        customItems.add(R.string.grantAccess2)
+        customItems.add(R.id.custom_my_id_1)
 
         // Add a custom item after the outline button.
         menuItems.addAll(indexOfOutlineButton + 1, customItems)
@@ -48,34 +47,14 @@ class ATestActivity : PdfActivity() {
         super.onCreateOptionsMenu(menu)
 
         // Edit first button.
-        val menuItem1 = menu.findItem(R.id.custom_action1)
+        val menuItem1 = menu.findItem(R.id.custom_my_id_1)
         menuItem1.title = "Men Itm 1"
-        menuItem1.setIcon(R.drawable.ic_arrow_left)
-
-        // Let's say we want to tint icons same as the default ones). We can read the color
-        // from the theme, or specify the same color we have in theme. Reading from theme is a bit
-        // more complex but a better way to do it, so here's how to:
-        val a = theme.obtainStyledAttributes(
-            null,
-            R.styleable.pspdf__ActionBarIcons,
-            R.attr.pspdf__actionBarIconsStyle,
-            R.style.PSPDFKit_ActionBarIcons
-        )
-        val mainToolbarIconsColor = a.getColor(R.styleable.pspdf__ActionBarIcons_pspdf__iconsColor, ContextCompat.getColor(this, R.color.white))
-        a.recycle()
+        menuItem1.setIcon(R.drawable.ic_launcher_background)
 
         // Tinting all custom menu drawables (you can do it the easier way if you iterate over your ids).
         val icon1 = menuItem1.icon
-        icon1?.let { DrawableCompat.setTint(it, mainToolbarIconsColor) }
+//        icon1?.let { DrawableCompat.setTint(it, mainToolbarIconsColor) }
         menuItem1.icon = icon1
-
-        val icon2 = menuItem2.icon
-        icon2?.let { DrawableCompat.setTint(it, mainToolbarIconsColor) }
-        menuItem2.icon = icon2
-
-        val icon3 = menuItem3.icon
-        icon3?.let { DrawableCompat.setTint(it, mainToolbarIconsColor) }
-        menuItem3.icon = icon3
 
         // All our menu items are marked as SHOW_AS_ALWAYS. If you want to just show the first 4
         // items for example and send others to the overflow, you can simply do:
@@ -84,5 +63,25 @@ class ATestActivity : PdfActivity() {
         }
 
         return true
+    }
+
+    /**
+     * Override onOptionsItemSelected(MenuItem) to handle click events for your custom menu items.
+     */
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        val handled = when (item.itemId) {
+            R.id.custom_my_id_1 -> {
+                Toast.makeText(this, "Selected custom_my_id_101", Toast.LENGTH_SHORT).show()
+                true
+            }
+
+            else -> {
+                false
+            }
+        }
+
+        // Return true if you have handled the current event. If your code has not handled the event,
+        // pass it on to the superclass. This is important or standard PSPDFKit actions won't work.
+        return handled || super.onOptionsItemSelected(item)
     }
 }

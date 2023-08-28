@@ -9,6 +9,7 @@ import androidx.activity.viewModels
 import com.agem.pspdfkittest_01.databinding.ActivityMainBinding
 import com.agem.pspdfkittest_01.firstkit.dataStore
 import com.agem.pspdfkittest_01.testActivity.ATestActivity
+import com.agem.pspdfkittest_01.testActivity.BTestActivity
 import com.pspdfkit.configuration.activity.PdfActivityConfiguration
 import com.pspdfkit.ui.PdfActivityIntentBuilder
 
@@ -39,8 +40,6 @@ class MainActivity : BaseBindingActivity<ActivityMainBinding>(
             startActivity(intent)
         }
 
-
-
         binding.tvATestActivity.setOnClickListener {
 //            val uri: Uri = "content://com.android.providers.media.documents/document/document%3A2380"
 
@@ -49,6 +48,11 @@ class MainActivity : BaseBindingActivity<ActivityMainBinding>(
 //            } else {
 //                showPermissionExplanationDialog()
 //            }
+        }
+
+        binding.tvBTestActivity.setOnClickListener {
+            val intent = Intent(this, BTestActivity::class.java)
+            startActivity(intent)
         }
     }
 

@@ -357,4 +357,6 @@
     <string name="instantJsonAttachmentDescription">Import and export Instant JSON Attachment binary data for an image stamp annotation.</string>
     <string name="constructionExampleTitle">Construction</string>
     <string name="constructionExampleDescription">Shows how to configure PSPDFKit to display a building floor plan.</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>
