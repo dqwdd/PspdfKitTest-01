@@ -8,8 +8,11 @@ import com.agem.pspdfkittest_01.R
 import com.pspdfkit.document.PdfDocument
 import com.pspdfkit.ui.PdfActivity
 
-class ATestActivity : PdfActivity() {
+/**
+ * 이 Activity 는 그냥 PDF 나오게 한 Activity
+ * */
 
+class ATestActivity : PdfActivity() {
 
     override fun onPrepareOptionsMenu(menu: Menu): Boolean {
 

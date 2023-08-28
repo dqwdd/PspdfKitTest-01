@@ -10,6 +10,7 @@ import com.agem.pspdfkittest_01.databinding.ActivityMainBinding
 import com.agem.pspdfkittest_01.firstkit.dataStore
 import com.agem.pspdfkittest_01.testActivity.ATestActivity
 import com.agem.pspdfkittest_01.testActivity.BTestActivity
+import com.agem.pspdfkittest_01.testActivity.CTestActivity
 import com.pspdfkit.configuration.activity.PdfActivityConfiguration
 import com.pspdfkit.ui.PdfActivityIntentBuilder
 
@@ -43,15 +44,20 @@ class MainActivity : BaseBindingActivity<ActivityMainBinding>(
         binding.tvATestActivity.setOnClickListener {
 //            val uri: Uri = "content://com.android.providers.media.documents/document/document%3A2380"
 
-//            if (Utils.hasExternalStorageRwPermission(this)) {
+            if (Utils.hasExternalStorageRwPermission(this)) {
                 showOpenFileDialog()
-//            } else {
-//                showPermissionExplanationDialog()
-//            }
+            } else {
+                showPermissionExplanationDialog()
+            }
         }
 
         binding.tvBTestActivity.setOnClickListener {
             val intent = Intent(this, BTestActivity::class.java)
+            startActivity(intent)
+        }
+
+        binding.tvCTestActivity.setOnClickListener {
+            val intent = Intent(this, CTestActivity::class.java)
             startActivity(intent)
         }
     }
@@ -84,13 +90,17 @@ class MainActivity : BaseBindingActivity<ActivityMainBinding>(
     @SuppressLint("ResourceType")
     private val requestPDF = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         it.data?.data?.let { uri ->
+
             val config = PdfActivityConfiguration.Builder(this)
                 .layout(com.pspdfkit.R.layout.pspdf__pdf_activity)
                 .build()
+            // val config = PdfConfiguration.Builder().build()
+
             val intent = PdfActivityIntentBuilder.fromUri(this, uri)
                 .configuration(config)
                 .activityClass(ATestActivity::class.java)
                 .build()
+
             startActivity(intent)
         }
     }
