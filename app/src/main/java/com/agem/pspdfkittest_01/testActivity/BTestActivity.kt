@@ -3,7 +3,6 @@ package com.agem.pspdfkittest_01.testActivity
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.result.contract.ActivityResultContracts
 import com.agem.pspdfkittest_01.BaseBindingActivity
 import com.agem.pspdfkittest_01.R
@@ -26,7 +25,6 @@ class BTestActivity : BaseBindingActivity<ActivityBtestBinding>(
         super.onCreate(savedInstanceState)
 
         binding.tvGoBTestToAFragment.setOnClickListener {
-            Log.e("tetest", "!51")
             showOpenFileDialog()
         }
     }
