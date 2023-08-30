@@ -7,13 +7,13 @@
  *   This notice may not be removed from this file.
  */
 
-package com.agem.pspdfkittest_01
+package com.agem.pspdfkittest_01.basesupplies
 
 import android.content.Context
 import androidx.datastore.preferences.core.Preferences
+import com.agem.pspdfkittest_01.firstkit.PreferencesSection
 import com.agem.pspdfkittest_01_application.Page
 import com.agem.pspdfkittest_01_application.PreferenceKeys
-import com.agem.pspdfkittest_01.firstkit.PreferencesSection
 import com.pspdfkit.configuration.activity.PdfActivityConfiguration
 import com.pspdfkit.configuration.activity.ThumbnailBarMode
 import com.pspdfkit.configuration.activity.UserInterfaceViewMode
@@ -33,6 +33,7 @@ sealed class SearchState {
 fun SearchState.searchQueryOrBlank() = when (this) {
     SearchState.Hidden -> ""
     is SearchState.Visible -> searchQuery
+    else -> {}
 }
 
 data class State(

@@ -1,4 +1,4 @@
-package com.agem.pspdfkittest_01
+package com.agem.pspdfkittest_01.main
 
 import android.app.Application
 import android.content.Context
@@ -10,8 +10,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
-import com.agem.pspdfkittest_01.firstkit.preferenceSections
+import com.agem.pspdfkittest_01.R
+import com.agem.pspdfkittest_01.basesupplies.PSPDFExample
+import com.agem.pspdfkittest_01.basesupplies.State
 import com.agem.pspdfkittest_01.firstkit.getSectionsWithExamples
+import com.agem.pspdfkittest_01.firstkit.preferenceSections
 import com.pspdfkit.configuration.activity.PdfActivityConfiguration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,7 +28,10 @@ import kotlinx.coroutines.launch
  * This ViewModel should be the only way to access and mutate that state.
  */
 class ExternalDocumentExample(context: Context) :
-    PSPDFExample(context, R.string.externalDocumentExampleTitle, R.string.externalDocumentExampleDescription) {
+    PSPDFExample(context,
+        R.string.externalDocumentExampleTitle,
+        R.string.externalDocumentExampleDescription
+    ) {
     override fun launchExample(context: Context, configuration: PdfActivityConfiguration.Builder) {
         val intent = Intent(context, ExternalExampleActivity::class.java)
         intent.putExtra(ExternalExampleActivity.EXTRA_CONFIGURATION, configuration.build())

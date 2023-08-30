@@ -4,8 +4,6 @@
 
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
-    <!-- largeHeap="true" -> PDF 파일을 Rendering 하면 메모리가 많이 소모될 수 있으며,
-    이 속성을 통해 앱에 메모리 부족 오류가 발생하지 않도록 충분한 힙이 할당되게 함 -->
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -16,6 +14,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.PspdfKitTest01"
         tools:targetApi="31">
+        <activity
+            android:name=".testActivity.DTestActivity"
+            android:exported="false" />
         <activity
             android:name=".testActivity.CTestActivity"
             android:exported="false" />
@@ -31,11 +32,11 @@
             android:resizeableActivity="true"
             android:windowSoftInputMode="adjustNothing" />
         <activity
-            android:name=".ExternalExampleActivity"
+            android:name=".main.ExternalExampleActivity"
             android:label="ExternalStorage"
             android:windowSoftInputMode="adjustNothing" />
         <activity
-            android:name=".MainActivity"
+            android:name=".main.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

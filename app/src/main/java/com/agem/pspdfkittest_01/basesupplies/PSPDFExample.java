@@ -5,7 +5,7 @@
  *   Please see License for details. This notice may not be removed from this file.
  */
 
-package com.agem.pspdfkittest_01;
+package com.agem.pspdfkittest_01.basesupplies;
 
 import android.content.Context;
 

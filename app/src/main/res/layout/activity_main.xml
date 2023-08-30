@@ -7,20 +7,20 @@
 
         <import type="android.view.View" />
 
-        <import type="com.agem.pspdfkittest_01.CatalogViewModel" />
+        <import type="com.agem.pspdfkittest_01.main.CatalogViewModel" />
 
         <variable
             name="vm"
-            type="com.agem.pspdfkittest_01.CatalogViewModel" />
+            type="com.agem.pspdfkittest_01.main.CatalogViewModel" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:context=".MainActivity">
+        tools:context=".main.MainActivity">
 
         <TextView
-            android:id="@+id/tv_text"
+            android:id="@+id/tvText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="170dp"
@@ -30,34 +30,44 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
-            android:id="@+id/tv_a_test_activity"
+            android:id="@+id/tvATestActivity"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="80dp"
             android:text="Go to A Test Activity"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tv_text" />
+            app:layout_constraintTop_toBottomOf="@+id/tvText" />
 
         <TextView
-            android:id="@+id/tv_b_test_activity"
+            android:id="@+id/tvBTestActivity"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="80dp"
             android:text="Go to B Test Activity"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tv_a_test_activity" />
+            app:layout_constraintTop_toBottomOf="@+id/tvATestActivity" />
 
         <TextView
-            android:id="@+id/tv_c_test_activity"
+            android:id="@+id/tvCTestActivity"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="80dp"
             android:text="Go to C Test Activity"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tv_b_test_activity" />
+            app:layout_constraintTop_toBottomOf="@+id/tvBTestActivity" />
+
+        <TextView
+            android:id="@+id/tvDTestActivity"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="80dp"
+            android:text="Go to D Test Activity"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvCTestActivity" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

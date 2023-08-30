@@ -1,4 +1,4 @@
-package com.agem.pspdfkittest_01
+package com.agem.pspdfkittest_01.base
 
 import android.view.View
 import androidx.lifecycle.ViewModel

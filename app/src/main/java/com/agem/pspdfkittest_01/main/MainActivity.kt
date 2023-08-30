@@ -1,4 +1,4 @@
-package com.agem.pspdfkittest_01
+package com.agem.pspdfkittest_01.main
 
 import android.annotation.SuppressLint
 import android.app.AlertDialog
@@ -6,16 +6,22 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import com.agem.pspdfkittest_01.R
+import com.agem.pspdfkittest_01.base.BaseBindingActivity
+import com.agem.pspdfkittest_01.basesupplies.Utils
+import com.agem.pspdfkittest_01.basesupplies.getPdfActivityConfigurationBuilder
 import com.agem.pspdfkittest_01.databinding.ActivityMainBinding
 import com.agem.pspdfkittest_01.firstkit.dataStore
 import com.agem.pspdfkittest_01.testActivity.ATestActivity
 import com.agem.pspdfkittest_01.testActivity.BTestActivity
 import com.agem.pspdfkittest_01.testActivity.CTestActivity
+import com.agem.pspdfkittest_01.testActivity.DTestActivity
 import com.pspdfkit.configuration.activity.PdfActivityConfiguration
 import com.pspdfkit.ui.PdfActivityIntentBuilder
 
 class MainActivity : BaseBindingActivity<ActivityMainBinding>(
-    R.layout.activity_main) {
+    R.layout.activity_main
+) {
 
     private val viewModel: CatalogViewModel by viewModels {
         CatalogViewModel.Factory(application, dataStore)
@@ -60,6 +66,11 @@ class MainActivity : BaseBindingActivity<ActivityMainBinding>(
             val intent = Intent(this, CTestActivity::class.java)
             startActivity(intent)
         }
+
+        binding.tvDTestActivity.setOnClickListener {
+            val intent = Intent(this, DTestActivity::class.java)
+            startActivity(intent)
+        }
     }
 
     private fun getPdfActivityConfigurationBuilder() = viewModel.state.value.getPdfActivityConfigurationBuilder(this)
@@ -69,7 +80,11 @@ class MainActivity : BaseBindingActivity<ActivityMainBinding>(
             .setMessage(R.string.externalDocumentExamplePermissionExplanation)
             .setCancelable(false)
             .setPositiveButton(R.string.grantAccess) { _, _ ->
-                if (Utils.requestExternalStorageRwPermission(this, ExternalExampleActivity.REQUEST_ASK_FOR_PERMISSION)) {
+                if (Utils.requestExternalStorageRwPermission(
+                        this,
+                        ExternalExampleActivity.REQUEST_ASK_FOR_PERMISSION
+                    )
+                ) {
                     showOpenFileDialog()
                 }
             }

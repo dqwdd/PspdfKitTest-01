@@ -5,7 +5,7 @@
  *   Please see License for details. This notice may not be removed from this file.
  */
 
-package com.agem.pspdfkittest_01;
+package com.agem.pspdfkittest_01.basesupplies;
 
 import android.Manifest;
 import android.app.Activity;
@@ -25,6 +25,8 @@ import androidx.annotation.ColorRes;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+
+import com.agem.pspdfkittest_01.R;
 
 // We can't use AndroidVersion.INSTANCE.isAtLeastMarshmallow in this
 // class because  of the way it gets obfuscated after building

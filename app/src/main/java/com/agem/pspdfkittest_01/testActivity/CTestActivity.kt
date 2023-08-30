@@ -4,11 +4,10 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
 import android.view.MotionEvent
-import android.view.View
 import android.widget.Button
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.constraintlayout.widget.ConstraintLayout
-import com.agem.pspdfkittest_01.BaseBindingActivity
+import com.agem.pspdfkittest_01.base.BaseBindingActivity
 import com.agem.pspdfkittest_01.R
 import com.agem.pspdfkittest_01.databinding.ActivityCtestBinding
 import com.pspdfkit.configuration.PdfConfiguration
@@ -42,8 +41,9 @@ class CTestActivity : BaseBindingActivity<ActivityCtestBinding>(
 
     private lateinit var mFragment: PdfFragment
 
-    private lateinit var annotationCreationButton: Button
     private var annotationCreationActive = false
+
+    private lateinit var annotationCreationButton: Button
     private lateinit var toolbarCoordinatorLayout: ToolbarCoordinatorLayout
 
     private lateinit var annotationCreationToolbar: AnnotationCreationToolbar
@@ -71,6 +71,7 @@ class CTestActivity : BaseBindingActivity<ActivityCtestBinding>(
                     params.guidePercent = motionEvent.rawY / binding.clSplit.height
                     binding.guideline.layoutParams = params
                 }
+
                 else -> return@setOnTouchListener false
             }
             return@setOnTouchListener true
@@ -82,10 +83,8 @@ class CTestActivity : BaseBindingActivity<ActivityCtestBinding>(
         annotationCreationToolbar = AnnotationCreationToolbar(this)
         textSelectionToolbar = TextSelectionToolbar(this)
         annotationEditingToolbar = AnnotationEditingToolbar(this)
-        // toolbars.
 
-        // Use this if you want to use annotation inspector with annotation creation and editing
-        // toolbars.
+        // Use this if you want to use annotation inspector with annotation creation and editing toolbars.
         inspectorCoordinatorLayout = findViewById(R.id.inspectorCoordinatorLayout)
         annotationEditingInspectorController = DefaultAnnotationEditingInspectorController(this, inspectorCoordinatorLayout)
         annotationCreationInspectorController = DefaultAnnotationCreationInspectorController(this, inspectorCoordinatorLayout)
@@ -93,7 +92,7 @@ class CTestActivity : BaseBindingActivity<ActivityCtestBinding>(
 
     private fun initAnnotationCreationButton() {
         annotationCreationButton = findViewById(R.id.openAnnotationEditing)
-        annotationCreationButton.setOnClickListener { v: View? ->
+        annotationCreationButton.setOnClickListener {
             if (annotationCreationActive) {
                 mFragment.exitCurrentlyActiveMode()
             } else {
@@ -105,7 +104,7 @@ class CTestActivity : BaseBindingActivity<ActivityCtestBinding>(
     }
 
     private fun updateButtonText() {
-        annotationCreationButton.setText(if (annotationCreationActive) "close_editor" else "open_editor")
+        annotationCreationButton.text = if (annotationCreationActive) "close_editor" else "open_editor"
     }
 
     private fun showOpenFileDialog() {

@@ -1,12 +1,13 @@
-package com.agem.pspdfkittest_01
+package com.agem.pspdfkittest_01.main
 
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import androidx.fragment.app.FragmentActivity
+import com.agem.pspdfkittest_01.R
+import com.agem.pspdfkittest_01.basesupplies.Utils
 import com.pspdfkit.PSPDFKit
 import com.pspdfkit.configuration.activity.PdfActivityConfiguration
 import com.pspdfkit.document.ImageDocumentLoader
