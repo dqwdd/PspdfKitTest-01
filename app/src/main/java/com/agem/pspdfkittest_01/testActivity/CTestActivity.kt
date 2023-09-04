@@ -5,9 +5,13 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.MotionEvent
+import android.view.ViewGroup
 import android.widget.Button
+import android.widget.ImageView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.annotation.UiThread
@@ -143,7 +147,7 @@ class CTestActivity : BaseBindingActivity<ActivityCtestBinding>(
         }
 
         getAnnotation()
-
+//        getAnnotationClick()
         updateButtonText()
     }
 
@@ -291,14 +295,14 @@ class CTestActivity : BaseBindingActivity<ActivityCtestBinding>(
             val boundingBox = currentAnnotation.boundingBox
             boundingBox.inset(-ATestActivity.ANNOTATION_BOUNDING_BOX_PADDING_PX.toFloat(), -ATestActivity.ANNOTATION_BOUNDING_BOX_PADDING_PX.toFloat())
 
-            Log.e("tetest", "366666")
-            Log.e("tetest", "boundingBox === $boundingBox")
+//            Log.e("tetest", "366666")
+//            Log.e("tetest", "boundingBox === $boundingBox")
 
         }
 
-        Log.e("tetest", "21512")
-        Log.e("tetest", "currentAnnotation.boundingBox === ${currentAnnotation?.boundingBox}")
-        Log.e("tetest", "currentAnnotation.boundingBox?.bottom === ${currentAnnotation?.boundingBox?.bottom}")
+//        Log.e("tetest", "21512")
+//        Log.e("tetest", "currentAnnotation.boundingBox === ${currentAnnotation?.boundingBox}")
+//        Log.e("tetest", "currentAnnotation.boundingBox?.bottom === ${currentAnnotation?.boundingBox?.bottom}")
 
         // After conversion, the `boundingBox` will be in screen coordinates.
         mFragment.getVisiblePdfRect(currentAnnotation?.boundingBox!!, currentAnnotation.pageIndex)
@@ -309,7 +313,6 @@ class CTestActivity : BaseBindingActivity<ActivityCtestBinding>(
         mFragment.addDocumentListener(object : SimpleDocumentListener() {
             @UiThread
             override fun onDocumentLoaded(loadedDocument: PdfDocument) {
-                Log.e("tetest", "65555555")
                 annotationLoadingDisposable = loadedDocument.annotationProvider
                     .getAllAnnotationsOfTypeAsync(EnumSet.allOf(AnnotationType::class.java))
                     .toList()
@@ -324,7 +327,45 @@ class CTestActivity : BaseBindingActivity<ActivityCtestBinding>(
         mFragment.addOnFormElementUpdatedListener {  }
     }
 
+//    private fun getAnnotationClick() {
+//        mFragment.addDocumentListener(object : SimpleDocumentListener() {
+//            @UiThread
+//            override fun onPageClick(
+//                document: PdfDocument,
+//                pageIndex: Int,
+//                event: MotionEvent?,
+//                pagePosition: PointF?,
+//                clickedAnnotation: Annotation?
+//            ): Boolean {
+//
+//                Log.e("tetest", "1235")
+//                Log.e("tetest", "event == ${event?.action}")
+//
+//                if (clickedAnnotation != null) {
+//                    val annotationWidth = clickedAnnotation.boundingBox.width()
+//                    val annotationHeight = -clickedAnnotation.boundingBox.height()
+//
+//                    val bitmapWidth = 300
+//                    val heightFactor = bitmapWidth / annotationWidth
+//                    val bitmapHeight = (annotationHeight * heightFactor).toInt()
+//
+//                    val bitmap = Bitmap.createBitmap(
+//                        bitmapWidth,
+//                        bitmapHeight,
+//                        Bitmap.Config.ARGB_8888)
+//
+//                    moveA(bitmap, clickedAnnotation)
+//
+//                    return false
+//                }
+//
+//                return true
+//            }
+//        })
+//    }
+
     private fun renderAnnotation() {
+        // annotation 의 크기를 변경할 시 annotation 값을 다시 저장해 주어야 함
         if (currentAnnotation == null) return
 
         val annotationWidth = currentAnnotation!!.boundingBox.width()
@@ -334,7 +375,6 @@ class CTestActivity : BaseBindingActivity<ActivityCtestBinding>(
         val heightFactor = bitmapWidth / annotationWidth
         val bitmapHeight = (annotationHeight * heightFactor).toInt()
 
-
         val bitmap = Bitmap.createBitmap(
             bitmapWidth,
             bitmapHeight,
@@ -342,52 +382,98 @@ class CTestActivity : BaseBindingActivity<ActivityCtestBinding>(
 
         mBitmap = bitmap
 
-        binding.ivBitmapImage.setImageBitmap(mBitmap)
-        Log.e("tetest", "!@221211")
+        binding.ivBitmapImage.setImageBitmap(bitmap)
+        currentAnnotation!!.renderToBitmap(bitmap)
+
+        moveA(bitmap, currentAnnotation!!)
+
+
+        val annotationImageView = ImageView(mContext)
+
+//        annotationImageView.setImageBitmap(bitmap)
+//        currentAnnotation!!.renderToBitmap(bitmap)
+        addContentView(
+            annotationImageView,
+            ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        )
+
+
 
     } // https://pspdfkit.com/guides/android/annotations/rendering-annotations/
 
-    var mBitmap: Bitmap? = null
 
-//    override fun dispatchTouchEvent(ev: MotionEvent?): Boolean {
-//        if (currentAnnotation?.isAttached != null) {
+
+    private var mBitmap: Bitmap? = null
+
+    override fun dispatchTouchEvent(ev: MotionEvent?): Boolean {
+        if (currentAnnotation?.isAttached != null) {
 //            val annotation = currentAnnotation
-//            Log.e("tetest", "currentAnnotation?.isAttached === ${currentAnnotation?.isAttached}")
-//
 //            if (ev?.actionMasked == MotionEvent.ACTION_MOVE) {
-//                Log.e("tetest", "211212122")
-//                Log.e("tetest", "annotation?.boundingBox == ${annotation?.boundingBox}")
-//                if (annotation?.boundingBox?.bottom!! < 0.25) {
-//                    Log.e("tetest", "64646464646")
+//                if (annotation?.boundingBox?.bottom!! < 0) {
 //                    if (mBitmap != null) {
 //                        binding.ivBitmapImage.setImageBitmap(mBitmap)
-//                        Log.e("tetest", "444444444")
-////                        binding.ivBitmapImage.setImageResource(R.drawable.ic_opening_documents)
-//                    }
-//                    else {
+//                        currentAnnotation!!.renderToBitmap(mBitmap!!)
+//                    } else {
 //                        binding.ivBitmapImage.setImageBitmap(null)
-//                        Log.e("tetest", "26666666666622")
 //                    }
 //                }
 //            }
-////            else if (ev?.actionMasked == MotionEvent.ACTION_DOWN) {
-////                if (annotation?.boundingBox?.bottom!! < 0.25) {
-////                    Log.e("tetest", "00005555")
-////                    if (mBitmap != null) {
-////                        binding.ivBitmapImage.setImageBitmap(mBitmap)
-////                        Log.e("tetest", "111111")
-////                    }
-////                    else {
-////                        binding.ivBitmapImage.setImageBitmap(null)
-////                        Log.e("tetest", "22222")
-////                    }
-////                } else {
-////                    Log.e("tetest", "114555555")
-////                    Log.e("tetest", "annotation?.boundingBox?.bottom == ${annotation.boundingBox.bottom}")
-////                }
-////            }
-//        }
-//
-//        return super.dispatchTouchEvent(ev)
-//    }
+
+            var ttt = 0
+
+            val myHandler = Handler(Looper.getMainLooper())
+            myHandler.postDelayed({
+                if (ttt != 0) return@postDelayed
+                Log.e("tetest", "ev?.action == ${ev?.action}")
+                if (ev?.actionMasked == MotionEvent.ACTION_MOVE) {
+                    if (ttt != 0) return@postDelayed
+                    Log.e("tetest", "333")
+//                    this.moveA(mBitmap!!, currentAnnotation!!)
+                    ttt = 1
+                }
+            }, 1500)
+        }
+
+        return super.dispatchTouchEvent(ev)
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    private fun moveA(bitmap: Bitmap, currentAnnotation: Annotation) {
+
+        var startX = 0f
+        var startY = 0f
+
+        val annotationImageView = ImageView(mContext)
+
+        annotationImageView.setImageBitmap(bitmap)
+        currentAnnotation.renderToBitmap(bitmap)
+        addContentView(
+            annotationImageView,
+            ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        )
+
+        Log.e("tetest", "moveA() 동작")
+
+
+        annotationImageView.bringToFront()
+
+        annotationImageView.setOnTouchListener { v, event ->
+            when (event.action) {
+
+                MotionEvent.ACTION_DOWN -> {
+                    startX = event.x
+                    startY = event.y
+                }
+
+                MotionEvent.ACTION_MOVE -> {
+                    val movedX: Float = event.x - startX
+                    val movedY: Float = event.y - startY
+
+                    v.x = v.x + movedX
+                    v.y = v.y + movedY
+                }
+            }
+            true
+        }
+    }
 }
