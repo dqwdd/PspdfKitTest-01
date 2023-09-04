@@ -1,12 +1,18 @@
 package com.agem.pspdfkittest_01.testActivity
 
 import android.annotation.SuppressLint
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.Toast
 import com.agem.pspdfkittest_01.R
+import com.pspdfkit.annotations.Annotation
+import com.pspdfkit.annotations.AnnotationType
 import com.pspdfkit.document.PdfDocument
 import com.pspdfkit.ui.PdfActivity
+import io.reactivex.rxjava3.disposables.Disposable
+import java.util.*
+import kotlin.math.min
 
 /**
  * 이 Activity 는 그냥 PDF 나오게 한 Activity
@@ -21,7 +27,12 @@ class ATestActivity : PdfActivity() {
     }
 
     override fun onDocumentLoaded(document: PdfDocument) {
+        Log.e("tetest", "65555555")
         // Document is ready to use.
+        annotationLoadingDisposable = document.annotationProvider
+            .getAllAnnotationsOfTypeAsync(EnumSet.allOf(AnnotationType::class.java))
+            .toList()
+            .subscribe { annotations -> documentAnnotations.addAll(annotations) }
     }
 
     override fun onDocumentLoadFailed(exception: Throwable) {
@@ -75,6 +86,7 @@ class ATestActivity : PdfActivity() {
         val handled = when (item.itemId) {
             R.id.custom_my_id_1 -> {
                 Toast.makeText(this, "Selected custom_my_id_101", Toast.LENGTH_SHORT).show()
+                getAnnotationSize()
                 true
             }
 
@@ -86,5 +98,48 @@ class ATestActivity : PdfActivity() {
         // Return true if you have handled the current event. If your code has not handled the event,
         // pass it on to the superclass. This is important or standard PSPDFKit actions won't work.
         return handled || super.onOptionsItemSelected(item)
+    }
+
+
+
+    private val documentAnnotations = mutableListOf<Annotation>()
+
+    /** This holds reference to the currently zoomed annotation. */
+    private var currentAnnotation: Annotation? = null
+
+    private var annotationLoadingDisposable: Disposable? = null
+
+    private fun getAnnotationSize() {
+        Log.e("tetest", "getAnnotationSize")
+        Log.e("tetest", "documentAnnotations.isEmpty() == ${documentAnnotations.isEmpty()}")
+
+        if (documentAnnotations.isEmpty()) return
+
+        var currentAnnotation = this.currentAnnotation
+        val currentAnnotationIndex = if (currentAnnotation == null) {
+            -1
+        } else {
+            documentAnnotations.indexOf(currentAnnotation)
+        }
+        val nextAnnotationIndex = min(currentAnnotationIndex + 1, documentAnnotations.size - 1)
+
+        if (nextAnnotationIndex != currentAnnotationIndex) {
+            currentAnnotation = documentAnnotations[nextAnnotationIndex]
+            this.currentAnnotation = currentAnnotation
+
+            val boundingBox = currentAnnotation.boundingBox
+            boundingBox.inset(-ANNOTATION_BOUNDING_BOX_PADDING_PX.toFloat(), -ANNOTATION_BOUNDING_BOX_PADDING_PX.toFloat())
+
+            Log.e("tetest", "366666")
+            Log.e("tetest", "boundingBox === $boundingBox")
+        }
+
+        Log.e("tetest", "21512")
+        Log.e("tetest", "currentAnnotation.boundingBox === ${currentAnnotation?.boundingBox}")
+    }
+
+    companion object {
+        /** Padding around annotation bounding box used when zooming. */
+        const val ANNOTATION_BOUNDING_BOX_PADDING_PX = 16
     }
 }
