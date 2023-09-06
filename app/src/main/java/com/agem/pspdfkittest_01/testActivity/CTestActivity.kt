@@ -3,16 +3,18 @@ package com.agem.pspdfkittest_01.testActivity
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.PointF
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
+import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageView
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
+import androidx.annotation.IntRange
 import androidx.annotation.RequiresApi
 import androidx.annotation.UiThread
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -21,10 +23,12 @@ import com.agem.pspdfkittest_01.base.BaseBindingActivity
 import com.agem.pspdfkittest_01.databinding.ActivityCtestBinding
 import com.pspdfkit.annotations.Annotation
 import com.pspdfkit.annotations.AnnotationType
+import com.pspdfkit.annotations.InkAnnotation
 import com.pspdfkit.configuration.PdfConfiguration
 import com.pspdfkit.configuration.page.PageScrollDirection
 import com.pspdfkit.document.PdfDocument
 import com.pspdfkit.listeners.DocumentListener
+import com.pspdfkit.listeners.OnDocumentLongPressListener
 import com.pspdfkit.listeners.SimpleDocumentListener
 import com.pspdfkit.ui.PdfFragment
 import com.pspdfkit.ui.inspector.PropertyInspectorCoordinatorLayout
@@ -45,22 +49,25 @@ import io.reactivex.rxjava3.disposables.Disposable
 import java.util.*
 import kotlin.math.min
 
-
 /**
  * 이 Activity 는 화면 Split 하게 나오는 거 테스트하는 Activity
  * */
 
-// 리스너 달면 될듯
 class CTestActivity : BaseBindingActivity<ActivityCtestBinding>(
     R.layout.activity_ctest),
     AnnotationManager.OnAnnotationCreationModeChangeListener,
     AnnotationManager.OnAnnotationEditingModeChangeListener,
     TextSelectionManager.OnTextSelectionModeChangeListener,
-    DocumentListener{
+    DocumentListener,
+    OnDocumentLongPressListener{
+
+    private val viewModel: CTestViewModel by viewModels()
 
     private lateinit var mFragment: PdfFragment
 
-    private var annotationCreationActive = false
+    private var annotationToolbarCreationActive = false
+
+    private var mBitmap: Bitmap? = null
 
     // 툴바 열기 위한 것들
     private lateinit var annotationCreationButton: Button
@@ -79,11 +86,18 @@ class CTestActivity : BaseBindingActivity<ActivityCtestBinding>(
     private var currentAnnotation: Annotation? = null
     private var annotationLoadingDisposable: Disposable? = null
 
+    @RequiresApi(Build.VERSION_CODES.Q)
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        setToolbar()
+        setupEvent()
+    }
 
     @RequiresApi(Build.VERSION_CODES.Q)
     @SuppressLint("ClickableViewAccessibility")
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+    override fun setupEvent() {
+        super.setupEvent()
 
         binding.tvGetDocument.setOnClickListener {
             showOpenFileDialog()
@@ -94,28 +108,28 @@ class CTestActivity : BaseBindingActivity<ActivityCtestBinding>(
                 MotionEvent.ACTION_DOWN -> {}
                 MotionEvent.ACTION_MOVE -> {
                     val params = binding.guideline.layoutParams as ConstraintLayout.LayoutParams
-
                     params.guidePercent = motionEvent.rawY / binding.clSplit.height
                     binding.guideline.layoutParams = params
-
-                    Log.e("tetest", "8788888")
-                    Log.e("tetest", "binding.guideline.layoutParams === ${binding.guideline.layoutParams}")
                 }
                 MotionEvent.ACTION_UP -> {
-                    Log.e("tetest", "214124")
                     val location = IntArray(2)
                     binding.guideline.getLocationInSurface(location)
-//                    Log.e("tetest", "location[0] === ${location[0]}")
-//                    Log.e("tetest", "location[1] === ${location[1]}")
-
                 }
 
                 else -> return@setOnTouchListener false
             }
             return@setOnTouchListener true
         }
+        binding.btnGetAnnotationLocateData.setOnClickListener {
+            getAnnotationLocateData()
+        }
 
+        binding.btnRenderAnnotation.setOnClickListener {
+            renderAnnotation()
+        }
+    }
 
+    private fun setToolbar() {
         toolbarCoordinatorLayout = findViewById(R.id.toolbarCoordinatorLayout)
 
         annotationCreationToolbar = AnnotationCreationToolbar(this)
@@ -127,32 +141,23 @@ class CTestActivity : BaseBindingActivity<ActivityCtestBinding>(
         annotationEditingInspectorController = DefaultAnnotationEditingInspectorController(this, inspectorCoordinatorLayout)
         annotationCreationInspectorController = DefaultAnnotationCreationInspectorController(this, inspectorCoordinatorLayout)
 
-        binding.btnGetAnnotationLocateData.setOnClickListener {
-            getAnnotationLocateData()
-        }
-
-        binding.btnRenderAnnotation.setOnClickListener {
-            renderAnnotation()
-        }
     }
 
     private fun initAnnotationCreationButton() {
         annotationCreationButton = findViewById(R.id.openAnnotationEditing)
         annotationCreationButton.setOnClickListener {
-            if (annotationCreationActive) {
+            if (annotationToolbarCreationActive) {
                 mFragment.exitCurrentlyActiveMode()
             } else {
                 mFragment.enterAnnotationCreationMode()
             }
         }
 
-        getAnnotation()
-//        getAnnotationClick()
         updateButtonText()
     }
 
     private fun updateButtonText() {
-        val tt = if (annotationCreationActive) "close_editor" else "open_editor"
+        val tt = if (annotationToolbarCreationActive) "close_editor" else "open_editor"
         binding.openAnnotationEditing.text = tt
     }
 
@@ -183,13 +188,161 @@ class CTestActivity : BaseBindingActivity<ActivityCtestBinding>(
                 }
 
 
-            mFragment.addOnAnnotationCreationModeChangeListener(this)
-            mFragment.addOnAnnotationEditingModeChangeListener(this)
-            mFragment.addOnTextSelectionModeChangeListener(this)
+            // 툴바 리스너 apply
+            mFragment.apply {
+                addOnAnnotationCreationModeChangeListener(this@CTestActivity)
+                addOnAnnotationEditingModeChangeListener(this@CTestActivity)
+                addOnTextSelectionModeChangeListener(this@CTestActivity)
+                addDocumentListener(object : SimpleDocumentListener() {
+                    @UiThread
+                    override fun onDocumentLoaded(loadedDocument: PdfDocument) {
+                        annotationLoadingDisposable = loadedDocument.annotationProvider
+                            .getAllAnnotationsOfTypeAsync(EnumSet.allOf(AnnotationType::class.java))
+                            .toList()
+                            .subscribe { annotations -> documentAnnotations.addAll(annotations) }
+                    }
+
+                    override fun onDocumentLoadFailed(exception: Throwable) {
+                        Log.e("tetest", "onDocumentLoadFailed 222255543444")
+                    }
+                })
+                setOnDocumentLongPressListener(this@CTestActivity)
+            }
 
             initAnnotationCreationButton()
         }
     }
+
+    private fun getAnnotationLocateData() {
+        if (documentAnnotations.isEmpty()) return
+
+        var currentAnnotation = this.currentAnnotation
+        val currentAnnotationIndex = if (currentAnnotation == null) {
+            -1
+        } else {
+            documentAnnotations.indexOf(currentAnnotation)
+        }
+        val nextAnnotationIndex = min(currentAnnotationIndex + 1, documentAnnotations.size - 1)
+
+        if (nextAnnotationIndex != currentAnnotationIndex) {
+            currentAnnotation = documentAnnotations[nextAnnotationIndex]
+            this.currentAnnotation = currentAnnotation
+
+            val boundingBox = currentAnnotation.boundingBox
+            boundingBox.inset(-ATestActivity.ANNOTATION_BOUNDING_BOX_PADDING_PX.toFloat(), -ATestActivity.ANNOTATION_BOUNDING_BOX_PADDING_PX.toFloat())
+        }
+
+        mFragment.getVisiblePdfRect(currentAnnotation?.boundingBox!!, currentAnnotation.pageIndex)
+
+    }
+
+    private fun renderAnnotation() {
+        // annotation 의 크기를 변경할 시 annotation 값을 다시 저장해 주어야 함
+        if (currentAnnotation == null) return
+
+        val bitmap = viewModel.getBitmap(currentAnnotation!!)
+
+        mBitmap = bitmap
+
+        binding.ivBitmapImage.setImageBitmap(bitmap)
+        currentAnnotation!!.renderToBitmap(bitmap)
+
+        createImageViewCanMove(bitmap, currentAnnotation!!)
+        createImageViewUnderGuideline()
+    } // https://pspdfkit.com/guides/android/annotations/rendering-annotations/
+
+    private fun createImageViewUnderGuideline() {
+        val annotationImageView = ImageView(mContext)
+
+        addContentView(
+            annotationImageView,
+            ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        )
+    }
+
+    override fun dispatchTouchEvent(ev: MotionEvent?): Boolean {
+//        if (currentAnnotation?.isAttached != null) {
+//            val annotation = currentAnnotation
+//            if (ev?.actionMasked == MotionEvent.ACTION_MOVE) {
+//                if (annotation?.boundingBox?.bottom!! < 0) {
+//                    if (mBitmap != null) {
+//                        binding.ivBitmapImage.setImageBitmap(mBitmap)
+//                        currentAnnotation!!.renderToBitmap(mBitmap!!)
+//                    } else {
+//                        binding.ivBitmapImage.setImageBitmap(null)
+//                    }
+//                }
+//            }
+
+//            this.moveA(mBitmap!!, currentAnnotation!!)
+//        }
+
+        return super.dispatchTouchEvent(ev)
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    private fun createImageViewCanMove(bitmap: Bitmap, currentAnnotation: Annotation) {
+
+        var startX = 0f
+        var startY = 0f
+
+        val annotationImageView = ImageView(mContext)
+
+        annotationImageView.setImageBitmap(bitmap)
+        currentAnnotation.renderToBitmap(bitmap)
+        addContentView(
+            annotationImageView,
+            ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        )
+
+        Log.e("tetest", "moveA() 동작")
+
+        annotationImageView.bringToFront()
+
+        annotationImageView.setOnTouchListener { v, event ->
+            when (event.action) {
+
+                MotionEvent.ACTION_DOWN -> {
+                    startX = event.x
+                    startY = event.y
+                }
+
+                MotionEvent.ACTION_MOVE -> {
+                    val movedX: Float = event.x - startX
+                    val movedY: Float = event.y - startY
+
+                    v.x = v.x + movedX
+                    v.y = v.y + movedY
+                }
+            }
+            true
+        }
+    }
+
+    override fun onDocumentLongPress(
+        document: PdfDocument,
+        @IntRange(from = 0) pageIndex: Int,
+        event: MotionEvent?,
+        pagePosition: PointF?,
+        longPressedAnnotation: Annotation?
+    ): Boolean {
+        mFragment.view?.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+
+        Log.e("tetest", "2222412")
+        Log.e("tetest", "pageIndex === $pageIndex")
+        Log.e("tetest", "event === $event")
+        Log.e("tetest", "pagePosition === $pagePosition")
+        Log.e("tetest", "longPressedAnnotation?.type === ${longPressedAnnotation?.type}")
+        if (longPressedAnnotation is InkAnnotation) {
+            val action = longPressedAnnotation.boundingBox
+        }
+
+        return true
+    }
+
+
+
+    // 아래는 툴바 관련
 
     override fun onDestroy() {
         super.onDestroy()
@@ -200,27 +353,11 @@ class CTestActivity : BaseBindingActivity<ActivityCtestBinding>(
 
     // AnnotationManager.OnAnnotationCreationModeChangeListener
     override fun onEnterAnnotationCreationMode(controller: AnnotationCreationController) {
-
         annotationCreationInspectorController.bindAnnotationCreationController(controller)
 
-        // When entering the annotation creation mode we bind the toolbar to the provided
-        // controller, and
-        // issue the coordinator layout to animate the toolbar in place.
-        // Whenever the user presses an action, the toolbar forwards this command to the controller.
-        // Instead of using the `AnnotationEditingToolbar` you could use a custom UI that operates
-        // on the controller.
-        // Same principle is used on all other toolbars.
-
-        // When entering the annotation creation mode we bind the toolbar to the provided
-        // controller, and
-        // issue the coordinator layout to animate the toolbar in place.
-        // Whenever the user presses an action, the toolbar forwards this command to the controller.
-        // Instead of using the `AnnotationEditingToolbar` you could use a custom UI that operates
-        // on the controller.
-        // Same principle is used on all other toolbars.
         annotationCreationToolbar.bindController(controller)
         toolbarCoordinatorLayout.displayContextualToolbar(annotationCreationToolbar, true)
-        annotationCreationActive = true
+        annotationToolbarCreationActive = true
         updateButtonText()
     }
 
@@ -235,7 +372,7 @@ class CTestActivity : BaseBindingActivity<ActivityCtestBinding>(
     override fun onExitAnnotationCreationMode(controller: AnnotationCreationController) {
         toolbarCoordinatorLayout.removeContextualToolbar(true)
         annotationCreationToolbar.unbindController()
-        annotationCreationActive = false
+        annotationToolbarCreationActive = false
 
         annotationCreationInspectorController.unbindAnnotationCreationController()
         updateButtonText()
@@ -276,204 +413,4 @@ class CTestActivity : BaseBindingActivity<ActivityCtestBinding>(
         textSelectionToolbar.unbindController()
     }
 
-
-    private fun getAnnotationLocateData() {
-        if (documentAnnotations.isEmpty()) return
-
-        var currentAnnotation = this.currentAnnotation
-        val currentAnnotationIndex = if (currentAnnotation == null) {
-            -1
-        } else {
-            documentAnnotations.indexOf(currentAnnotation)
-        }
-        val nextAnnotationIndex = min(currentAnnotationIndex + 1, documentAnnotations.size - 1)
-
-        if (nextAnnotationIndex != currentAnnotationIndex) {
-            currentAnnotation = documentAnnotations[nextAnnotationIndex]
-            this.currentAnnotation = currentAnnotation
-
-            val boundingBox = currentAnnotation.boundingBox
-            boundingBox.inset(-ATestActivity.ANNOTATION_BOUNDING_BOX_PADDING_PX.toFloat(), -ATestActivity.ANNOTATION_BOUNDING_BOX_PADDING_PX.toFloat())
-
-//            Log.e("tetest", "366666")
-//            Log.e("tetest", "boundingBox === $boundingBox")
-
-        }
-
-//        Log.e("tetest", "21512")
-//        Log.e("tetest", "currentAnnotation.boundingBox === ${currentAnnotation?.boundingBox}")
-//        Log.e("tetest", "currentAnnotation.boundingBox?.bottom === ${currentAnnotation?.boundingBox?.bottom}")
-
-        // After conversion, the `boundingBox` will be in screen coordinates.
-        mFragment.getVisiblePdfRect(currentAnnotation?.boundingBox!!, currentAnnotation.pageIndex)
-
-    }
-
-    private fun getAnnotation() {
-        mFragment.addDocumentListener(object : SimpleDocumentListener() {
-            @UiThread
-            override fun onDocumentLoaded(loadedDocument: PdfDocument) {
-                annotationLoadingDisposable = loadedDocument.annotationProvider
-                    .getAllAnnotationsOfTypeAsync(EnumSet.allOf(AnnotationType::class.java))
-                    .toList()
-                    .subscribe { annotations -> documentAnnotations.addAll(annotations) }
-            }
-
-            override fun onDocumentLoadFailed(exception: Throwable) {
-                Log.e("tetest", "onDocumentLoadFailed 222255543444")
-            }
-        })
-
-        mFragment.addOnFormElementUpdatedListener {  }
-    }
-
-//    private fun getAnnotationClick() {
-//        mFragment.addDocumentListener(object : SimpleDocumentListener() {
-//            @UiThread
-//            override fun onPageClick(
-//                document: PdfDocument,
-//                pageIndex: Int,
-//                event: MotionEvent?,
-//                pagePosition: PointF?,
-//                clickedAnnotation: Annotation?
-//            ): Boolean {
-//
-//                Log.e("tetest", "1235")
-//                Log.e("tetest", "event == ${event?.action}")
-//
-//                if (clickedAnnotation != null) {
-//                    val annotationWidth = clickedAnnotation.boundingBox.width()
-//                    val annotationHeight = -clickedAnnotation.boundingBox.height()
-//
-//                    val bitmapWidth = 300
-//                    val heightFactor = bitmapWidth / annotationWidth
-//                    val bitmapHeight = (annotationHeight * heightFactor).toInt()
-//
-//                    val bitmap = Bitmap.createBitmap(
-//                        bitmapWidth,
-//                        bitmapHeight,
-//                        Bitmap.Config.ARGB_8888)
-//
-//                    moveA(bitmap, clickedAnnotation)
-//
-//                    return false
-//                }
-//
-//                return true
-//            }
-//        })
-//    }
-
-    private fun renderAnnotation() {
-        // annotation 의 크기를 변경할 시 annotation 값을 다시 저장해 주어야 함
-        if (currentAnnotation == null) return
-
-        val annotationWidth = currentAnnotation!!.boundingBox.width()
-        val annotationHeight = -currentAnnotation!!.boundingBox.height()
-
-        val bitmapWidth = 300
-        val heightFactor = bitmapWidth / annotationWidth
-        val bitmapHeight = (annotationHeight * heightFactor).toInt()
-
-        val bitmap = Bitmap.createBitmap(
-            bitmapWidth,
-            bitmapHeight,
-            Bitmap.Config.ARGB_8888)
-
-        mBitmap = bitmap
-
-        binding.ivBitmapImage.setImageBitmap(bitmap)
-        currentAnnotation!!.renderToBitmap(bitmap)
-
-        moveA(bitmap, currentAnnotation!!)
-
-
-        val annotationImageView = ImageView(mContext)
-
-//        annotationImageView.setImageBitmap(bitmap)
-//        currentAnnotation!!.renderToBitmap(bitmap)
-        addContentView(
-            annotationImageView,
-            ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-        )
-
-
-
-    } // https://pspdfkit.com/guides/android/annotations/rendering-annotations/
-
-
-
-    private var mBitmap: Bitmap? = null
-
-    override fun dispatchTouchEvent(ev: MotionEvent?): Boolean {
-        if (currentAnnotation?.isAttached != null) {
-//            val annotation = currentAnnotation
-//            if (ev?.actionMasked == MotionEvent.ACTION_MOVE) {
-//                if (annotation?.boundingBox?.bottom!! < 0) {
-//                    if (mBitmap != null) {
-//                        binding.ivBitmapImage.setImageBitmap(mBitmap)
-//                        currentAnnotation!!.renderToBitmap(mBitmap!!)
-//                    } else {
-//                        binding.ivBitmapImage.setImageBitmap(null)
-//                    }
-//                }
-//            }
-
-            var ttt = 0
-
-            val myHandler = Handler(Looper.getMainLooper())
-            myHandler.postDelayed({
-                if (ttt != 0) return@postDelayed
-                Log.e("tetest", "ev?.action == ${ev?.action}")
-                if (ev?.actionMasked == MotionEvent.ACTION_MOVE) {
-                    if (ttt != 0) return@postDelayed
-                    Log.e("tetest", "333")
-//                    this.moveA(mBitmap!!, currentAnnotation!!)
-                    ttt = 1
-                }
-            }, 1500)
-        }
-
-        return super.dispatchTouchEvent(ev)
-    }
-
-    @SuppressLint("ClickableViewAccessibility")
-    private fun moveA(bitmap: Bitmap, currentAnnotation: Annotation) {
-
-        var startX = 0f
-        var startY = 0f
-
-        val annotationImageView = ImageView(mContext)
-
-        annotationImageView.setImageBitmap(bitmap)
-        currentAnnotation.renderToBitmap(bitmap)
-        addContentView(
-            annotationImageView,
-            ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-        )
-
-        Log.e("tetest", "moveA() 동작")
-
-
-        annotationImageView.bringToFront()
-
-        annotationImageView.setOnTouchListener { v, event ->
-            when (event.action) {
-
-                MotionEvent.ACTION_DOWN -> {
-                    startX = event.x
-                    startY = event.y
-                }
-
-                MotionEvent.ACTION_MOVE -> {
-                    val movedX: Float = event.x - startX
-                    val movedY: Float = event.y - startY
-
-                    v.x = v.x + movedX
-                    v.y = v.y + movedY
-                }
-            }
-            true
-        }
-    }
 }
