@@ -27,7 +27,6 @@ import com.agem.pspdfkittest_01.firstkit.CatalogPreferences.invertPageColors
 import com.agem.pspdfkittest_01.firstkit.CatalogPreferences.showPrintAction
 import com.agem.pspdfkittest_01.firstkit.CatalogPreferences.showShareAction
 import com.agem.pspdfkittest_01.firstkit.CatalogPreferences.startPage
-import com.agem.pspdfkittest_01_application.PreferenceKeys
 import java.util.*
 
 sealed class Preference<T>(

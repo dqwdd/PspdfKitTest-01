@@ -13,7 +13,8 @@
         <TextView
             android:id="@+id/tvGetDocument"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="40dp"
+            android:gravity="center"
             android:text="get c document"
             app:layout_constraintBottom_toTopOf="@+id/image1"
             app:layout_constraintEnd_toEndOf="parent"
@@ -84,34 +85,25 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <Button
-            android:id="@+id/btnGetAnnotationLocateData"
-            android:layout_width="wrap_content"
-            android:layout_height="48dp"
-            android:layout_marginTop="100dp"
-            android:layout_marginEnd="16dp"
-            android:layout_marginBottom="16dp"
-            android:elevation="4dp"
-            android:text="getAnnotationLocateData"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/guideline" />
-
-        <Button
             android:id="@+id/btnRenderAnnotation"
             android:layout_width="wrap_content"
             android:layout_height="48dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginBottom="8dp"
             android:text="renderAnnotation"
             app:layout_constraintBottom_toTopOf="@+id/guideline"
             app:layout_constraintEnd_toEndOf="parent" />
 
-        <ImageView
-            android:id="@+id/ivBitmapImage"
+        <Button
+            android:id="@+id/btnImageViewToAnnotation"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="48dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginEnd="8dp"
+            android:elevation="4dp"
+            android:text="imageToAnnotation"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/guideline"
-            tools:src="@mipmap/ic_launcher" />
-
+            app:layout_constraintTop_toBottomOf="@+id/guideline" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </layout>

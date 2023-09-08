@@ -21,8 +21,7 @@ import java.io.File
  * 이 Activity 는 화면 Link 기능을 테스트하는 Activity
  * 스콘에는 있지만 pspdfkit 에는 이 기능이 없는 것 같다
  * 그래서 movePage 메서드로 그냥 페이지만 이동해야 할 듯?
- * (link 를 걸었던 위치로 이동 및 zoom 설정하기를 같이 해야 한다고 생각했었는데
- * 생각해 보니 페이지만 이동해도 될 듯)
+ * (link 를 걸었던 위치로 이동 및 zoom 설정하기를 같이 해도 될 듯)
  * */
 
 class DTestActivity : BaseBindingActivity<ActivityDtestBinding>(
@@ -75,7 +74,7 @@ class DTestActivity : BaseBindingActivity<ActivityDtestBinding>(
         // Move the current page.
         Log.e("tetest", "21512")
         Log.e("tetest", "mFragment.pageIndex == ${mFragment.pageIndex}")
-        val pagesToMove = setOf(mFragment.pageIndex);
+        val pagesToMove = setOf(mFragment.pageIndex)
 
         // Make sure `disposable` is managed by the activity and destroyed correctly
         // when the activity is destroyed.
@@ -83,7 +82,7 @@ class DTestActivity : BaseBindingActivity<ActivityDtestBinding>(
             Log.e("tetest", "1333353")
             // 관련이 있는지 보고 아님 말고
             Log.e("tetest", "documentEditor?.document?.bookmarkProvider == ${documentEditor?.document?.bookmarkProvider?.bookmarks}")
-            Log.e("tetest", "documentEditor?.document?.checkpointer == ${documentEditor?.document?.checkpointer?.isSaving}")
+            Log.e("tetest", "documentEditor?.document?.checkPointer == ${documentEditor?.document?.checkpointer?.isSaving}")
             documentEditor?.movePages(pagesToMove, it.pageCount)
                 ?.flatMapCompletable { documentEditor.saveDocument(mContext, outputFile.outputStream(), null) }
                 // Use `subscribeOn` to put `saveDocument` on a background thread, as it can be slow.

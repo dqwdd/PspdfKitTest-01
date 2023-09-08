@@ -64,6 +64,7 @@ class MainActivity : BaseBindingActivity<ActivityMainBinding>(
 
         binding.tvCTestActivity.setOnClickListener {
             val intent = Intent(this, CTestActivity::class.java)
+            intent.putExtra(CTestActivity.C_TEST_EXTRA_CONFIGURATION, getPdfActivityConfigurationBuilder().build().configuration)
             startActivity(intent)
         }
 

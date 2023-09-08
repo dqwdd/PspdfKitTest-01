@@ -7,7 +7,7 @@
  *   This notice may not be removed from this file.
  */
 
-package com.agem.pspdfkittest_01_application
+package com.agem.pspdfkittest_01.firstkit
 
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey

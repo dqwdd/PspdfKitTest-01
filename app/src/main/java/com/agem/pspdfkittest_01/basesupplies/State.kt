@@ -12,8 +12,8 @@ package com.agem.pspdfkittest_01.basesupplies
 import android.content.Context
 import androidx.datastore.preferences.core.Preferences
 import com.agem.pspdfkittest_01.firstkit.PreferencesSection
-import com.agem.pspdfkittest_01_application.Page
-import com.agem.pspdfkittest_01_application.PreferenceKeys
+import com.agem.pspdfkittest_01.firstkit.Page
+import com.agem.pspdfkittest_01.firstkit.PreferenceKeys
 import com.pspdfkit.configuration.activity.PdfActivityConfiguration
 import com.pspdfkit.configuration.activity.ThumbnailBarMode
 import com.pspdfkit.configuration.activity.UserInterfaceViewMode

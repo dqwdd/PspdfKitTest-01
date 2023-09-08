@@ -24,19 +24,14 @@ import com.pspdfkit.annotations.Annotation
 import com.pspdfkit.annotations.AnnotationType
 import com.pspdfkit.annotations.InkAnnotation
 import com.pspdfkit.configuration.PdfConfiguration
-import com.pspdfkit.configuration.page.PageScrollDirection
 import com.pspdfkit.document.PdfDocument
 import com.pspdfkit.listeners.DocumentListener
 import com.pspdfkit.listeners.OnDocumentLongPressListener
 import com.pspdfkit.listeners.SimpleDocumentListener
 import com.pspdfkit.ui.PdfFragment
+import com.pspdfkit.utils.getSupportParcelableExtra
 import io.reactivex.rxjava3.disposables.Disposable
 import java.util.*
-import kotlin.math.min
-
-/**
- * 이 Activity 는 화면 Split 하게 나오는 거 테스트하는 Activity
- * */
 
 class CTestActivity : BaseBindingActivity<ActivityCtestBinding>(R.layout.activity_ctest),
     DocumentListener, OnDocumentLongPressListener {
@@ -44,11 +39,11 @@ class CTestActivity : BaseBindingActivity<ActivityCtestBinding>(R.layout.activit
     private val viewModel: CTestViewModel by viewModels()
 
     private lateinit var mFragment: PdfFragment
-    private var mBitmap: Bitmap? = null
+    private lateinit var configuration: PdfConfiguration
+    private lateinit var mBitmap: Bitmap
 
     // 주석 값 저장하는 것들
     private val documentAnnotations = mutableListOf<Annotation>()
-    private var currentAnnotation: Annotation? = null
     private var annotationLoadingDisposable: Disposable? = null
 
     @RequiresApi(Build.VERSION_CODES.Q)
@@ -85,11 +80,12 @@ class CTestActivity : BaseBindingActivity<ActivityCtestBinding>(R.layout.activit
             return@setOnTouchListener true
         }
 
-        binding.btnGetAnnotationLocateData.setOnClickListener {
-            getAnnotationLocateData()
-        }
         binding.btnRenderAnnotation.setOnClickListener {
             renderAnnotation()
+        }
+
+        binding.btnImageViewToAnnotation.setOnClickListener {
+            setImageToAnnotation()
         }
     }
 
@@ -99,17 +95,17 @@ class CTestActivity : BaseBindingActivity<ActivityCtestBinding>(R.layout.activit
         intent.putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("application/pdf", "image/*"))
         requestPDF.launch(intent)
     }
-    // https://pspdfkit.com/guides/android/customizing-the-interface/using-toolbars-within-fragment/
 
     @SuppressLint("ResourceType")
     private val requestPDF = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         it.data?.data?.let { uri ->
             mFragment = supportFragmentManager.findFragmentById(R.id.flToCFragment) as PdfFragment?
                 ?: run {
-                    val newFragment = PdfFragment.newInstance(
-                        uri,
-                        PdfConfiguration.Builder().scrollDirection(PageScrollDirection.HORIZONTAL).build()
-                    )
+
+                    configuration = intent.getSupportParcelableExtra(C_TEST_EXTRA_CONFIGURATION, PdfConfiguration::class.java)
+                        ?: throw IllegalStateException("Activity Intent was missing configuration extra! at CTestActivity")
+
+                    val newFragment = PdfFragment.newInstance(uri, configuration)
                     supportFragmentManager
                         .beginTransaction()
                         .replace(R.id.flToCFragment, newFragment)
@@ -120,6 +116,7 @@ class CTestActivity : BaseBindingActivity<ActivityCtestBinding>(R.layout.activit
 
             mFragment.apply {
                 setOnDocumentLongPressListener(this@CTestActivity)
+
                 addDocumentListener(object : SimpleDocumentListener() {
                     @UiThread
                     override fun onDocumentLoaded(loadedDocument: PdfDocument) {
@@ -128,7 +125,6 @@ class CTestActivity : BaseBindingActivity<ActivityCtestBinding>(R.layout.activit
                             .toList()
                             .subscribe { annotations ->
                                 documentAnnotations.addAll(annotations)
-                                getAnnotationLocateData()
                             }
                     }
 
@@ -140,75 +136,103 @@ class CTestActivity : BaseBindingActivity<ActivityCtestBinding>(R.layout.activit
         }
     }
 
-    private fun getAnnotationLocateData() {
-        if (documentAnnotations.isEmpty()) return
-
-        var currentAnnotation = this.currentAnnotation
-        val currentAnnotationIndex = if (currentAnnotation == null) {
-            -1
-        } else {
-            documentAnnotations.indexOf(currentAnnotation)
-        }
-        val nextAnnotationIndex = min(currentAnnotationIndex + 1, documentAnnotations.size - 1)
-
-        if (nextAnnotationIndex != currentAnnotationIndex) {
-            currentAnnotation = documentAnnotations[nextAnnotationIndex]
-            this.currentAnnotation = currentAnnotation
-
-            val boundingBox = currentAnnotation.boundingBox
-            boundingBox.inset(-ATestActivity.ANNOTATION_BOUNDING_BOX_PADDING_PX.toFloat(), -ATestActivity.ANNOTATION_BOUNDING_BOX_PADDING_PX.toFloat())
-        }
-
-        mFragment.getVisiblePdfRect(currentAnnotation?.boundingBox!!, currentAnnotation.pageIndex)
-
-    }
-
     private fun renderAnnotation() {
         // annotation 의 크기를 변경할 시 annotation 값을 다시 저장해 주어야 함
-        if (currentAnnotation == null) return
+        if (documentAnnotations.isEmpty()) return
 
-        val bitmap = viewModel.getBitmap(currentAnnotation!!)
+        setBitmap()
 
-        mBitmap = bitmap
+//        documentAnnotations[0].renderToBitmap(mBitmap)
 
-        binding.ivBitmapImage.setImageBitmap(bitmap)
-        currentAnnotation!!.renderToBitmap(bitmap)
-
-        createImageViewCanMove(bitmap, currentAnnotation!!)
-        createImageViewUnderGuideline()
+        createImageViewCanMove(mBitmap, documentAnnotations[1])
     } // https://pspdfkit.com/guides/android/annotations/rendering-annotations/
 
-    private fun createImageViewUnderGuideline() {
+    @SuppressLint("CheckResult")
+    private fun setImageToAnnotation() {
+        // annotation 의 크기를 변경할 시 annotation 값을 다시 저장해 주어야 함
+        setBitmap2()
+
+        val mAnnotation = InkAnnotation(0)
+        mAnnotation.color = documentAnnotations[1].color
+        mAnnotation.alpha = documentAnnotations[1].alpha
+        mAnnotation.lineWidth = documentAnnotations[1].borderWidth
+
+        Log.e("tetest", "232332")
+        Log.e("tetest", "documentAnnotations[1].type == ${documentAnnotations[1].type}")
+        Log.e("tetest", "documentAnnotations[1].customData == ${documentAnnotations[1].customData}")
+
+        val line: MutableList<PointF> = ArrayList()
+        var x = 120
+        while (x < 720) {
+            val y = if (x % 120 == 0) 400 else 350
+            line.add(PointF(x.toFloat(), y.toFloat()))
+            x += 60
+        }
+
+        mFragment.document
+
+        // Ink annotations can hold multiple lines. This example only uses a single line.
+        mAnnotation.lines = listOf<List<PointF>>(line)
+        mFragment.addAnnotationToPage(mAnnotation, true)
+//        mAnnotation.renderToBitmapAsync(mBitmap).subscribe { bitmap, _ ->
+//            mAnnotation.renderToBitmap(bitmap)
+//        }
+    }
+
+
+    private fun setBitmap() {
+        val bitmap = viewModel.getBitmap(documentAnnotations[0])
+        mBitmap = bitmap
+    }
+
+    private fun setBitmap2() {
+        val bitmap = viewModel.getBitmap(documentAnnotations[1])
+        mBitmap = bitmap
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    private fun createImageViewCanMove(bitmap: Bitmap, firstAnnotation: Annotation) {
+
+        Log.e("tetest", "createImageViewCanMove() 동작")
+
+        var startX = 0f
+        var startY = 0f
+
         val annotationImageView = ImageView(mContext)
 
+        annotationImageView.setImageBitmap(bitmap)
+        firstAnnotation.renderToBitmap(bitmap)
         addContentView(
             annotationImageView,
             ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
         )
-    }
 
-    override fun dispatchTouchEvent(ev: MotionEvent?): Boolean {
-//        if (currentAnnotation?.isAttached != null) {
-//            val annotation = currentAnnotation
-//            if (ev?.actionMasked == MotionEvent.ACTION_MOVE) {
-//                if (annotation?.boundingBox?.bottom!! < 0) {
-//                    if (mBitmap != null) {
-//                        binding.ivBitmapImage.setImageBitmap(mBitmap)
-//                        currentAnnotation!!.renderToBitmap(mBitmap!!)
-//                    } else {
-//                        binding.ivBitmapImage.setImageBitmap(null)
-//                    }
-//                }
-//            }
+        annotationImageView.bringToFront()
 
-//            this.moveA(mBitmap!!, currentAnnotation!!)
-//        }
+        annotationImageView.setOnTouchListener { v, event ->
+            when (event.action) {
 
-        return super.dispatchTouchEvent(ev)
+                MotionEvent.ACTION_DOWN -> {
+                    startX = event.x
+                    startY = event.y
+                }
+
+                MotionEvent.ACTION_MOVE -> {
+                    val movedX: Float = event.x - startX
+                    val movedY: Float = event.y - startY
+
+                    v.x = v.x + movedX
+                    v.y = v.y + movedY
+                }
+            }
+            true
+        }
     }
 
     @SuppressLint("ClickableViewAccessibility")
-    private fun createImageViewCanMove(bitmap: Bitmap, currentAnnotation: Annotation) {
+    private fun createImageViewOnCoordinate(bitmap: Bitmap, currentAnnotation: Annotation, x: Float, y: Float) {
+
+        Log.e("tetest", "createImageViewOnTouchCoordinate() 동작")
 
         var startX = 0f
         var startY = 0f
@@ -222,9 +246,9 @@ class CTestActivity : BaseBindingActivity<ActivityCtestBinding>(R.layout.activit
             ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
         )
 
-        Log.e("tetest", "moveA() 동작")
-
         annotationImageView.bringToFront()
+        annotationImageView.x = x
+        annotationImageView.y = y
 
         annotationImageView.setOnTouchListener { v, event ->
             when (event.action) {
@@ -255,16 +279,19 @@ class CTestActivity : BaseBindingActivity<ActivityCtestBinding>(R.layout.activit
     ): Boolean {
         mFragment.view?.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
 
-        Log.e("tetest", "2222412")
-        Log.e("tetest", "pageIndex === $pageIndex")
         Log.e("tetest", "event === $event")
         Log.e("tetest", "pagePosition === $pagePosition")
         Log.e("tetest", "longPressedAnnotation?.type === ${longPressedAnnotation?.type}")
+
         if (longPressedAnnotation is InkAnnotation) {
-            val action = longPressedAnnotation.boundingBox
+            setBitmap()
+            createImageViewOnCoordinate(mBitmap, documentAnnotations[0], pagePosition!!.x, pagePosition.y)
         }
 
         return false
     }
 
+    companion object {
+        const val C_TEST_EXTRA_CONFIGURATION = "CTestActivity.EXTRA_CONFIGURATION"
+    }
 }

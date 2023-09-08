@@ -7,11 +7,11 @@
         <deviceKey>
           <Key>
             <type value="VIRTUAL_DEVICE_PATH" />
-            <value value="C:\Users\MEGA\.android\avd\pspdfkit-test-01.avd" />
+            <value value="C:\Users\MEGA\.android\avd\Tablet-01_E-Book.avd" />
           </Key>
         </deviceKey>
       </Target>
     </targetSelectedWithDropDown>
-    <timeTargetWasSelectedWithDropDown value="2023-08-24T00:43:49.068222600Z" />
+    <timeTargetWasSelectedWithDropDown value="2023-09-08T01:23:45.165296500Z" />
   </component>
 </project>
